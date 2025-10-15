@@ -1,6 +1,8 @@
 # evergit
 
-**A simple script that clones and updates local backups of GitHub repositories on a scheduled basis.**
+**Backup your Github repositories.**
+
+This is a simple script that clones and updates local backups of GitHub repositories on a scheduled basis.
 
 ## Overview
 
