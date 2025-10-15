@@ -93,14 +93,22 @@ def load_config(config_path_arg: Optional[str]) -> Dict[str, Any]:
 		else:
 			logging.warning(f"Specified config file not found: {config_path_arg}")
 	else:
-		# Search for default config files in the same directory as the script
+		# Search for and prioritize default config files in the script's directory.
 		script_dir = pathlib.Path(__file__).resolve().parent
-		for default_filename in DEFAULT_CONFIG_PATHS:
-			path = script_dir / default_filename
-			if path.is_file():
-				config_path = path
-				logging.info(f"Found configuration file: {config_path}")
-				break
+		found_configs = [
+			path for default_filename in DEFAULT_CONFIG_PATHS
+			if (path := script_dir / default_filename).is_file()
+		]
+
+		if len(found_configs) > 1:
+			logging.warning(
+				f"Found multiple configuration files: {[str(p) for p in found_configs]}. "
+				f"Using '{found_configs[0]}'."
+			)
+
+		if found_configs:
+			config_path = found_configs[0]
+			logging.info(f"Using configuration file: {config_path}")
 
 	if config_path:
 		try:
