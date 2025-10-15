@@ -5,8 +5,10 @@
 		"datefmt",
 		"Docstrings",
 		"evergit",
+		"getpid",
 		"levelname",
 		"pathlib",
-		"Thomason"
+		"Thomason",
+		"writability"
 	]
 }
