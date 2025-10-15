@@ -1,0 +1,9 @@
+{
+	"backup_root": "./evergit_backups",
+	"sleep_seconds": 3.0,
+	"randomize_sleep": true,
+	"repos": [
+		"https://github.com/github/docs.git",
+		"https://github.com/mthomason/ObjectiveMorality.git"
+	]
+}
