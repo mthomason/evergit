@@ -55,7 +55,7 @@ def setup_logging(log_file: Optional[Path] = None, level: int = logging.INFO) ->
 	log_handlers = [logging.StreamHandler(sys.stdout)]
 	if log_file:
 		fh = logging.FileHandler(log_file, encoding="utf-8")
-		log_handlers.append(fh)
+		log_handlers.append(fh) # Warn Argument 1 to "append" of "list" has incompatible type "FileHandler"; expected "StreamHandler[TextIO | Any]"
 
 	logging.basicConfig(
 		level=level,
