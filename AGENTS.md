@@ -5,8 +5,6 @@
 This document defines the objectives and requirements for an automated agent tasked with creating and maintaining the **evergit** backup script.
 The script’s purpose is to download and maintain local backups of GitHub repositories in a **safe, non-destructive** manner across all major operating systems.
 
----
-
 ## Environment
 
 * **Supported Operating Systems:** macOS, Windows, Linux, Unix
@@ -19,8 +17,6 @@ The script’s purpose is to download and maintain local backups of GitHub repos
 
   * Python standard library only (no external modules)
   * The `git` command must be installed and available in the system `PATH`
-
----
 
 ## Task Summary
 
@@ -39,7 +35,7 @@ The script should:
    * Modular, function-based structure (in a single `.py` file)
    * A `main()` entry point and `if __name__ == "__main__":` guard
    * Graceful error handling and clear logging
-6. **Support configuration files in both JSON and YAML formats**, automatically detecting file type by extension (`.json`, `.yaml`, `.yml`).
+6. **Support configuration files in both JSON and TOML formats**, automatically detecting file type by extension example (`.json`, `.toml`).
 
    * If no configuration file is found, the script should fall back to a hardcoded list of example repositories.
 7. **Be non-destructive:**
@@ -48,8 +44,6 @@ The script should:
    * It should only perform safe operations (`git clone` and `git pull`).
    * If a repository directory is currently in use (e.g., has uncommitted changes), the script must skip it safely and continue.
 8. **Be platform independent**, functioning wherever Python 3.13 and `git` are installed.
-
----
 
 ## Configuration File Examples
 
@@ -65,20 +59,21 @@ The script should:
 }
 ```
 
-### YAML Example (`repos.yaml`)
+### toml Example (`repos.toml`)
 
 ```yaml
-backup_root: /path/to/backup/folder
-repos:
-  - https://github.com/username/repo1.git
-  - git@github.com:username/repo2.git
-```
+backup_root = "/Users/you/Backups/github"
+sleep_seconds = 3.0
+randomize_sleep = true
 
----
+repos = [
+	"https://github.com/you/project1.git",
+	"git@github.com:you/project2.git",
+]```
 
 ## Script Behavior Overview
 
-1. Load configuration from a user-specified file (JSON or YAML).
+1. Load configuration from a user-specified file (JSON or TOML).
 
    * If none is found, use a built-in example list of repositories.
 2. Verify the existence of the backup directory.
@@ -92,8 +87,6 @@ repos:
      * If there are uncommitted changes, skip with a warning (do not overwrite).
    * Sleep for a few seconds between operations.
 4. Log all operations and errors to the console (and optionally to a file).
-
----
 
 ## Output and Logging
 
@@ -134,14 +127,12 @@ Each log entry should include:
   )
   ```
 
----
-
 ## Example Cron Setup (Linux/macOS)
 
 Run once daily at 3 AM:
 
 ```bash
-0 3 * * * /usr/bin/python3 /path/to/evergit.py --config /path/to/repos.yaml >> /path/to/evergit.log 2>&1
+0 3 * * * /usr/bin/python3 /path/to/evergit.py --config /path/to/repos.toml >> /path/to/evergit.log 2>&1
 ```
 
 ### Example Task Scheduler Setup (Windows)
@@ -152,8 +143,6 @@ Run daily using a scheduled task that executes:
 python.exe C:\path\to\evergit.py --config C:\path\to\repos.json
 ```
 
----
-
 ## Deliverable Expectations
 
 The agent’s output should include:
@@ -161,25 +150,21 @@ The agent’s output should include:
 * A complete, runnable Python script named `evergit.py`
 * Modular function structure within a single file
 * Inline comments and docstrings explaining each part
-* Example usage for both JSON and YAML configurations
+* Example usage for both JSON and TOML configurations
 * Safe handling of partial failures (e.g., one repo fails, others continue)
 * Consistent tab indentation
 * Well-formatted, timestamped logging output
-
----
 
 ## Notes for the Agent
 
 * Use only standard Python libraries (no external packages).
 
-  * For YAML parsing, check whether the `yaml` module is included in the environment (Python 3.13+); if not, handle gracefully or print a helpful message.
+  * For TOML parsing, check whether the `toml` module is included in the environment (Python 3.13+); if not, handle gracefully or print a helpful message.
 * Use `subprocess.run()` for Git commands.
 * Use `pathlib.Path` for filesystem operations.
 * Handle exceptions gracefully and ensure the process continues for other repositories.
 * Never delete or modify user data beyond safe `git pull` operations.
 * Prioritize readability and maintainability.
-
----
 
 ## Future Enhancements (Optional)
 
@@ -188,5 +173,3 @@ The agent’s output should include:
 * Command-line arguments for extra control (`--verbose`, `--skip-errors`, etc.)
 * Optional compression or pruning for old clones
 * Configurable sleep intervals or randomized delay range
-
----
