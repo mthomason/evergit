@@ -247,7 +247,7 @@ def main() -> None:
 	# Fallback to default if the configured backup_root is inaccessible
 	if backup_root != DEFAULT_BACKUP_ROOT and not is_writable(backup_root_path):
 		logging.warning(
-			f"Parent directory of '{backup_root}' is not accessible. "
+			f"Backup root '{backup_root}' is not a writable directory or cannot be created. "
 			f"Falling back to default location: '{DEFAULT_BACKUP_ROOT}'"
 		)
 		backup_root_path = pathlib.Path(DEFAULT_BACKUP_ROOT).expanduser()
