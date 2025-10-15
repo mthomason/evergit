@@ -2,14 +2,10 @@
 
 **A simple script that clones and updates local backups of GitHub repositories on a scheduled basis.**
 
----
-
 ## Overview
 
 **evergit** is a lightweight Python utility for maintaining up-to-date local backups of your GitHub repositories.
 It can be run manually or scheduled (for example, via `cron`) to ensure you always have current local mirrors of your repositories — even if GitHub or your account becomes unavailable.
-
----
 
 ## Features
 
@@ -20,15 +16,11 @@ It can be run manually or scheduled (for example, via `cron`) to ensure you alwa
 * Works well with cron or other schedulers
 * Minimal dependencies — pure Python and the `git` CLI
 
----
-
 ## Requirements
 
 * Python 3.8 or higher
 * `git` command-line tool installed and available in `PATH`
 * (Optional) GitHub personal access token for private repositories
-
----
 
 ## Installation
 
@@ -46,8 +38,6 @@ Or, if published later:
 pip install evergit
 ```
 
----
-
 ## Configuration
 
 Create a configuration file (e.g., `config.yaml`):
@@ -58,8 +48,6 @@ repos:
   - https://github.com/username/repo1.git
   - git@github.com:username/repo2.git
 ```
-
----
 
 ## Usage
 
@@ -85,15 +73,11 @@ Pulling changes...
 Done.
 ```
 
----
-
 ## License
 
 MIT License © 2025 Michael Thomason
 
----
-
-### About Scheduling
+## About Scheduling
 
 For most users, **cron** remains the simplest and most reliable way to schedule this script on Linux or macOS.
 
@@ -104,5 +88,3 @@ Alternatives:
 * **Docker/Containers** — run via a lightweight scheduler process or GitHub Actions
 
 If you just want hourly or daily backups, cron is perfectly fine.
-
----
