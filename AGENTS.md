@@ -59,17 +59,17 @@ The script should:
 }
 ```
 
-### toml Example (`repos.toml`)
+### TOML Example (`evergit.toml`)
 
-```yaml
-backup_root = "/Users/you/Backups/github"
+```toml
+backup_root = "./evergit_backups"
 sleep_seconds = 3.0
 randomize_sleep = true
-
 repos = [
-	"https://github.com/you/project1.git",
-	"git@github.com:you/project2.git",
-]```
+	"https://github.com/github/docs.git",
+	"https://github.com/mthomason/ObjectiveMorality.git",
+]
+```
 
 ## Script Behavior Overview
 

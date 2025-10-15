@@ -17,13 +17,22 @@ import tomllib
 from typing import Dict, Any, List, Optional, Union
 
 # --- Constants ---
+# A list of default configuration file paths to search for in the script's directory.
+# The script prioritizes them in the order they appear in this list.
 DEFAULT_CONFIG_PATHS: List[str] = ["evergit.toml", "evergit.json"]
+# The default directory where repository backups will be stored.
+# This is used if no backup_root is specified in the config file or command-line arguments.
 DEFAULT_BACKUP_ROOT: str = "./evergit_backups"
+# A default list of repositories to back up if no configuration file is found.
+# This serves as a fallback and example.
 DEFAULT_REPOS: List[str] = [
 	"https://github.com/github/docs.git",
 	"https://github.com/mthomason/ObjectiveMorality.git",
 ]
+# The default number of seconds to sleep between processing each repository.
 DEFAULT_SLEEP_SECONDS: float = 3.0
+# A flag to determine whether to randomize the sleep time between repository processing.
+# When true, the actual sleep time will be a random value between 50% and 150% of DEFAULT_SLEEP_SECONDS.
 DEFAULT_RANDOMIZE_SLEEP: bool = True
 
 # --- Main Application Logic ---
