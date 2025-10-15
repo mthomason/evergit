@@ -13,7 +13,6 @@ import re
 import subprocess
 import sys
 import time
-import tomllib
 from typing import Dict, Any, List, Optional, Union
 
 # --- Constants ---
@@ -34,6 +33,30 @@ DEFAULT_SLEEP_SECONDS: float = 3.0
 # A flag to determine whether to randomize the sleep time between repository processing.
 # When true, the actual sleep time will be a random value between 50% and 150% of DEFAULT_SLEEP_SECONDS.
 DEFAULT_RANDOMIZE_SLEEP: bool = True
+
+# --- Pre-flight Checks ---
+
+try:
+	import tomllib
+	_TOML_SUPPORTED = True
+except ImportError:
+	_TOML_SUPPORTED = False
+
+def _check_python_version():
+	"""
+	Checks if the script is running on a compatible Python version.
+	Exits with an error if the version is less than 3.13, as per AGENTS.md.
+	"""
+	if sys.version_info < (3, 13):
+		# Using print directly to stderr because logging may not be configured yet.
+		print(
+			f"error: evergit requires Python 3.13 or newer, but you are using {sys.version.split()[0]}.\n"
+			"Please update your Python environment or point your scheduler (cron, launchd) to the correct executable.",
+			file=sys.stderr
+		)
+		sys.exit(1)
+
+_check_python_version()
 
 # --- Main Application Logic ---
 
@@ -123,13 +146,20 @@ def load_config(config_path_arg: Optional[str]) -> Dict[str, Any]:
 		try:
 			with open(config_path, "rb") as f:
 				if config_path.suffix == ".toml":
+					if not _TOML_SUPPORTED:
+						logging.error(
+							f"Unsupported config file extension: {config_path.suffix}. "
+							"Your Python version does not include the 'tomllib' module. "
+							"Please use a '.json' file instead or upgrade to Python 3.11+."
+						)
+						sys.exit(1)
 					return tomllib.load(f)
 				elif config_path.suffix == ".json":
 					return json.load(f)
 				else:
 					logging.error(f"Unsupported config file extension: {config_path.suffix}")
 					sys.exit(1)
-		except (tomllib.TOMLDecodeError, json.JSONDecodeError, IOError) as e:
+		except (json.JSONDecodeError, IOError) if not _TOML_SUPPORTED else (tomllib.TOMLDecodeError, json.JSONDecodeError, IOError) as e:
 			logging.error(f"Failed to load or parse config file {config_path}: {e}")
 			sys.exit(1)
 
