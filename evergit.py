@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # evergit.py
-# A modular, single-file _skeleton_ for backing up GitHub repositories.
+# Single-file for backing up GitHub repositories.
 # MIT License - © Michael Thomason 2025
 
 import argparse
 import json
 import logging
+import os
 import pathlib
 import random
 import re
@@ -201,6 +202,32 @@ def backup_repo(repo_url: str, backup_root: pathlib.Path) -> None:
 	except Exception as e:
 		logging.error(f"{repo_id} - an unexpected error occurred: {e}")
 
+def is_writable(path: pathlib.Path) -> bool:
+	"""
+	Checks if a path is writable by trying to create a temporary file.
+	This is more reliable than os.access across different platforms.
+	"""
+	try:
+		# Find the first existing parent directory to test writability.
+		parent = path
+		while not parent.exists():
+			# If we go all the way to the root and it doesn't exist, it's not writable.
+			if parent.parent == parent:
+				return False
+			parent = parent.parent
+		
+		# Now that we have an existing directory, check if we can write to it.
+		# A simple os.access check is a good first step.
+		if not os.access(parent, os.W_OK):
+			return False
+			
+		# To be absolutely sure, attempt to create a temporary file.
+		temp_file = parent / f".tmp_write_test_{os.getpid()}"
+		temp_file.touch()
+		temp_file.unlink()
+		return True
+	except (IOError, OSError):
+		return False
 
 def main() -> None:
 	"""Main entry point for the script."""
@@ -217,8 +244,8 @@ def main() -> None:
 
 	backup_root_path = pathlib.Path(backup_root).expanduser()
 
-	# Fallback to default if the parent of the configured backup_root is inaccessible
-	if backup_root != DEFAULT_BACKUP_ROOT and not backup_root_path.parent.is_dir():
+	# Fallback to default if the configured backup_root is inaccessible
+	if backup_root != DEFAULT_BACKUP_ROOT and not is_writable(backup_root_path):
 		logging.warning(
 			f"Parent directory of '{backup_root}' is not accessible. "
 			f"Falling back to default location: '{DEFAULT_BACKUP_ROOT}'"
