@@ -29,7 +29,7 @@ It can be run manually or scheduled (for example, via `cron`) to ensure you alwa
 Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/evergit.git
+git clone https://github.com/mthomason/evergit.git
 cd evergit
 ```
 
