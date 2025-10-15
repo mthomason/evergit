@@ -19,8 +19,8 @@ from typing import Dict, Any, List, Optional, Union
 DEFAULT_CONFIG_PATHS: List[str] = ["evergit.toml", "evergit.json"]
 DEFAULT_BACKUP_ROOT: str = "./evergit_backups"
 DEFAULT_REPOS: List[str] = [
-	"https://github.com/git-guides/install-git",
-	"https://github.com/jules-dot-ai/blank_repo",
+	"https://github.com/github/docs.git",
+	"https://github.com/mthomason/ObjectiveMorality.git",
 ]
 DEFAULT_SLEEP_SECONDS: float = 3.0
 DEFAULT_RANDOMIZE_SLEEP: bool = True
