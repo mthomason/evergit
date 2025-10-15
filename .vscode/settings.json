@@ -1,6 +1,12 @@
 {
 	"cSpell.words": [
+		"asctime",
+		"asyncio",
+		"datefmt",
+		"Docstrings",
 		"evergit",
+		"levelname",
+		"pathlib",
 		"Thomason"
 	]
 }
