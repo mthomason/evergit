@@ -167,6 +167,42 @@ def has_uncommitted_changes(repo_path: pathlib.Path) -> bool:
 		logging.error(f"Failed to check git status in {repo_path}: {e.stderr}")
 		return True # Assume changes to be safe
 
+def run_git_command(command: List[str], repo_path: Union[str, pathlib.Path], repo_id: str) -> None:
+	"""
+	Executes a Git command and streams its output to the logger.
+	Raises CalledProcessError on failure.
+	"""
+	logging.info(f"Running command: '{' '.join(command)}' in '{repo_path}'")
+	process = subprocess.Popen(
+		command,
+		cwd=repo_path,
+		stdout=subprocess.PIPE,
+		stderr=subprocess.STDOUT, # Merge stderr into stdout
+		text=True,
+		bufsize=1 # Line-buffered
+	)
+
+	output_lines = []
+	# Stream the output line by line
+	if process.stdout:
+		for line in iter(process.stdout.readline, ''):
+			line = line.strip()
+			if line:
+				logging.info(f"  ({repo_id}) {line}")
+				output_lines.append(line)
+		process.stdout.close()
+
+	process.wait()
+
+	if process.returncode != 0:
+		# Reconstruct stderr for the exception from the captured output.
+		stderr_output = "\n".join(output_lines)
+		raise subprocess.CalledProcessError(
+			returncode=process.returncode,
+			cmd=command,
+			stderr=stderr_output
+		)
+
 def backup_repo(repo_url: str, backup_root: pathlib.Path) -> None:
 	"""
 	Clones or pulls a single repository in a non-destructive way.
@@ -182,9 +218,10 @@ def backup_repo(repo_url: str, backup_root: pathlib.Path) -> None:
 		if not repo_path.exists():
 			logging.info(f"Cloning {repo_id}...")
 			repo_path.parent.mkdir(parents=True, exist_ok=True)
-			subprocess.run(
-				['git', 'clone', repo_url, str(repo_path)],
-				capture_output=True, text=True, check=True
+			run_git_command(
+				['git', 'clone', '--progress', repo_url, str(repo_path)],
+				repo_path.parent,
+				repo_id
 			)
 			logging.info(f"{repo_id} - cloned successfully.")
 		else:
@@ -192,20 +229,21 @@ def backup_repo(repo_url: str, backup_root: pathlib.Path) -> None:
 				logging.warning(f"{repo_id} - directory exists but is not a valid git repository, skipping.")
 				return
 
+			logging.info(f"Checking for uncommitted changes in {repo_id}...")
 			if has_uncommitted_changes(repo_path):
 				logging.warning(f"{repo_id} - has uncommitted changes, skipping.")
 				return
 
 			logging.info(f"Pulling updates for {repo_id}...")
-			subprocess.run(
-				['git', 'pull'],
-				cwd=repo_path,
-				capture_output=True, text=True, check=True
+			run_git_command(
+				['git', 'pull', '--progress'],
+				repo_path,
+				repo_id
 			)
 			logging.info(f"{repo_id} - pulled successfully.")
 
 	except subprocess.CalledProcessError as e:
-		error_message = e.stderr.strip()
+		error_message = e.stderr.strip() if e.stderr else "(no error message captured)"
 		logging.error(f"{repo_id} - operation failed: {error_message}")
 	except Exception as e:
 		logging.error(f"{repo_id} - an unexpected error occurred: {e}")
