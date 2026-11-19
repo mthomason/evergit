@@ -11,18 +11,22 @@ It can be run manually or scheduled (for example, via `cron`) to ensure you alwa
 
 ## Features
 
-*	Automatically clones and updates multiple GitHub repositories
+*	Discovers every repository in your GitHub account automatically — no hardcoded list to maintain
+*	Follows repository renames, moving the existing local backup instead of re-cloning it
+*	Backs up every branch and tag, not just the default branch
 *	Stores complete git history locally (not just snapshots)
+*	Non-destructive: clones and fast-forwards, and never overwrites local changes
+*	Optionally includes or excludes forks and individual repositories
 *	Simple configuration using a TOML or JSON file
-*	Supports private repositories via SSH or personal access tokens
-*	Works well with cron or other schedulers
-*	Minimal dependencies — pure Python and the `git` CLI
+*	Supports private repositories via your existing git credentials
+*	Works well with cron, launchd, systemd timers, or Task Scheduler
+*	Minimal dependencies — pure Python, the `git` CLI, and the GitHub CLI for discovery
 
 ## Requirements
 
-*	Python 3.13 or higher
+*	Python 3.11 or higher (3.13 recommended)
 *	`git` command-line tool installed and available in `PATH`
-*	(Optional) GitHub personal access token for private repositories
+*	[GitHub CLI](https://cli.github.com/) (`gh`), authenticated with `gh auth login`, for repository discovery
 
 ## Installation
 
@@ -37,38 +41,71 @@ cd evergit
 
 Create a configuration file (e.g., `evergit.toml` or `evergit.json`) in the same directory as the script.
 
-If no configuration file is found, the script will fall back to a default list of repositories.
+Repositories are discovered automatically from `github_owner`. The optional `repos` list adds
+repositories that discovery would not return (for example, a repository owned by someone else).
 
 ### TOML Example (`evergit.toml`)
 ```toml
 backup_root = "./evergit_backups"
-sleep_seconds = 3.0
-randomize_sleep = true
+github_owner = "mthomason"
+include_forks = false
+exclude_repos = []
 repos = [
 	"https://github.com/github/docs.git",
-	"https://github.com/mthomason/ObjectiveMorality.git",
 ]
+sleep_seconds = 3.0
+randomize_sleep = true
+max_age_hours = 23.0
 ```
 
 ### JSON Example (`evergit.json`)
 ```json
 {
 	"backup_root": "./evergit_backups",
+	"github_owner": "mthomason",
+	"include_forks": false,
+	"exclude_repos": [],
+	"repos": [],
 	"sleep_seconds": 3.0,
 	"randomize_sleep": true,
-	"repos": [
-		"https://github.com/github/docs.git",
-		"https://github.com/mthomason/ObjectiveMorality.git"
-	]
+	"max_age_hours": 23.0
 }
 ```
+
+### Configuration keys
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `backup_root` | `~/evergit_backups` | Where backups are stored. Relative paths resolve against the config file's directory. |
+| `github_owner` | *(none)* | GitHub user or organization whose repositories are discovered. |
+| `include_forks` | `false` | Set to `true` to back up forks as well as your own repositories. |
+| `exclude_repos` | `[]` | Full names such as `"owner/name"` to skip. |
+| `repos` | `[]` | Extra repository URLs to back up in addition to discovered ones. |
+| `sleep_seconds` | `3.0` | Delay between repositories, to reduce load. |
+| `randomize_sleep` | `true` | Randomize the delay between 50% and 150% of `sleep_seconds`. |
+| `max_age_hours` | `23.0` | With `--if-due`, skip the run if the last successful backup is newer than this. |
+
+If no configuration file is found, there is no `github_owner` and no repository list, so the
+script exits with an error rather than silently backing up nothing.
 
 ## Usage
 
 Run manually:
 
 ```bash
-python evergit.py --config evergit.toml
+python3 evergit.py --config evergit.json
+```
+
+Preview what would happen without changing anything:
+
+```bash
+python3 evergit.py --dry-run
+```
+
+Only run if the last successful backup is more than `max_age_hours` old:
+
+```bash
+python3 evergit.py --if-due
 ```
 
 Example cron job (runs daily at 3 AM):
@@ -80,12 +117,20 @@ Example cron job (runs daily at 3 AM):
 ### Example Output
 ```
 [2025-10-14 03:00:00] INFO    Starting backup run
-[2025-10-14 03:00:01] INFO    Processing repository: github/docs
-[2025-10-14 03:00:05] INFO    github/docs - pulled successfully.
-[2025-10-14 03:00:10] INFO    Processing repository: mthomason/ObjectiveMorality
-[2025-10-14 03:00:15] WARNING mthomason/ObjectiveMorality - has uncommitted changes, skipping.
-[2025-10-14 03:00:15] INFO    Backup run complete
+[2025-10-14 03:00:01] INFO    Using configuration file: /path/to/evergit.json
+[2025-10-14 03:00:01] INFO    Using backup root: /path/to/evergit_backups
+[2025-10-14 03:00:02] INFO    Discovering repositories for 'mthomason' via GitHub CLI...
+[2025-10-14 03:00:03] INFO    Discovered 40 repositories (18 forks skipped).
+[2025-10-14 03:00:04] INFO    Processing repository: github/docs
+[2025-10-14 03:00:08] INFO    github/docs - backup updated successfully.
+[2025-10-14 03:00:12] INFO    Processing repository: mthomason/ObjectiveMorality
+[2025-10-14 03:00:13] INFO    mthomason/ObjectiveMorality - has local changes; remote refs are backed up, working tree left untouched.
+[2025-10-14 03:00:13] INFO    Backup run complete: 40 succeeded, 0 failed.
 ```
+
+If the backup destination is unavailable, the script logs an error and exits with status 1.
+It never falls back to a relative path, which would write somewhere unexpected (and under
+launchd is typically a read-only filesystem).
 
 ## License
 
@@ -102,3 +147,22 @@ Alternatives:
 *	**Docker/Containers** — run via a lightweight scheduler process or GitHub Actions
 
 If you just want hourly or daily backups, cron is perfectly fine.
+
+### Catch-up runs
+
+If the backup drive is not mounted when a scheduled run fires, the run exits with an error
+instead of writing somewhere unintended. To retry automatically, schedule `--if-due` more
+frequently (for example every two hours); it performs a full run only when the last successful
+backup is older than `max_age_hours`, and exits immediately otherwise.
+
+### macOS privacy permissions
+
+macOS requires explicit permission for a process to read and write removable volumes. A
+scheduled job (launchd agent, cron, or an app) needs **Removable Volumes** access for the
+Python binary it runs. Grant it in **System Settings → Privacy & Security → Files and Folders**
+(or add the Python app to **Full Disk Access**). Without it, the script logs
+`Operation not permitted [errno 1]` for the backup root and exits with status 1.
+
+This permission is tied to the specific Python installation. After upgrading Python, the
+scheduled job may lose access; re-grant it to the new binary (or keep using a Python version
+that already has access).

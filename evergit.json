@@ -1,9 +1,12 @@
 {
 	"backup_root": "./evergit_backups",
+	"github_owner": "mthomason",
+	"include_forks": false,
+	"exclude_repos": [],
+	"repos": [
+		"https://github.com/github/docs.git"
+	],
 	"sleep_seconds": 3.0,
 	"randomize_sleep": true,
-	"repos": [
-		"https://github.com/github/docs.git",
-		"https://github.com/mthomason/ObjectiveMorality.git"
-	]
+	"max_age_hours": 23.0
 }
